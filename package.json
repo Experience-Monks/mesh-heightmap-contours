@@ -1,0 +1,54 @@
+{
+  "name": "mesh-heightmap-contours",
+  "version": "1.0.0",
+  "description": "Given a heightmap, generate a \"contoured\" terrain mesh",
+  "main": "index.js",
+  "license": "MIT",
+  "author": {
+    "name": "Hugh Kennedy",
+    "email": "hughskennedy@gmail.com",
+    "url": "https://github.com/hughsk"
+  },
+  "dependencies": {
+    "cdt2d": "^1.0.0",
+    "mesh-combine": "^1.1.0",
+    "planar-graph-to-polyline": "^1.0.5",
+    "remove-orphan-vertices": "^1.0.0",
+    "shallow-copy": "0.0.1",
+    "simplicial-complex": "^1.0.0"
+  },
+  "devDependencies": {
+    "budo": "^5.1.0",
+    "canvas-fit": "^1.5.0",
+    "canvas-orbit-camera": "^1.0.2",
+    "garnish": "^3.2.1",
+    "gl-clear": "^2.0.0",
+    "gl-context": "^0.1.1",
+    "gl-geometry": "^1.1.1",
+    "gl-mat4": "^1.1.4",
+    "gl-shader": "^4.0.5",
+    "glslify": "^2.3.1",
+    "ndarray-fill": "^1.0.1",
+    "normals": "^1.0.1",
+    "simplex-noise": "^2.2.0",
+    "zeros": "^1.0.0"
+  },
+  "scripts": {
+    "start": "budo demo.js -- --transform glslify | garnish",
+    "bundle": "browserify demo.js -t glslify -o bundle.js"
+  },
+  "keywords": [
+    "contour",
+    "terrain",
+    "heightmap",
+    "mesh"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Jam3/mesh-heightmap-contours.git"
+  },
+  "homepage": "https://github.com/Jam3/mesh-heightmap-contours",
+  "bugs": {
+    "url": "https://github.com/Jam3/mesh-heightmap-contours/issues"
+  }
+}
