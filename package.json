@@ -1,6 +1,6 @@
 {
   "name": "mesh-heightmap-contours",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Given a heightmap, generate a \"contoured\" terrain mesh",
   "main": "index.js",
   "license": "MIT",
