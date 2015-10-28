@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "cdt2d": "^1.0.0",
+    "heightmap-contours": "^1.0.1",
     "mesh-combine": "^1.1.0",
     "planar-graph-to-polyline": "^1.0.5",
     "remove-orphan-vertices": "^1.0.0",
