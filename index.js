@@ -1,9 +1,9 @@
 var removeOrphans = require('remove-orphan-vertices')
-var toPolyline = require('planar-graph-to-polyline')
 var simplicial = require('simplicial-complex')
 var contours = require('heightmap-contours')
 var combine = require('mesh-combine')
 var copy = require('shallow-copy')
+var clean = require('clean-pslg')
 var cdt2d = require('cdt2d')
 
 module.exports = meshHeightmapContours
@@ -15,71 +15,86 @@ function meshHeightmapContours (heightmap, options) {
   var cont = contours(heightmap, options)
 
   return combine([]
-    .concat(meshSurface(cont, options))
     .concat(meshExtrude(cont, options))
+    .concat(meshSurface(cont, options))
   )
 }
 
 function meshSurface (contours, options) {
-  var meshes = contours
-    .reduce(function (layers, layer, i) {
-      var complexes = simplicial.connectedComponents(layer.cells)
-        .map(function (cells) {
-          return {
-            positions: layer.positions,
-            cells: cells,
-            height: i
-          }
-        })
+  return contours.map(function (layer, i) {
+    clean(layer.positions, layer.cells)
 
-      return layers.concat(complexes)
-    }, [])
-    .map(function (complex) {
-      var height = complex.height
-      complex = removeOrphans(complex.cells, complex.positions)
-      complex.height = height
-      return complex
-    })
-    .map(function (layer, i) {
-      return {
-        positions: to3d(layer.positions, layer.height),
-        cells: cdt2d(layer.positions, layer.cells, {
-          exterior: false,
-          delaunay: true
-        })
-      }
+    layer.positions = to3d(layer.positions, i)
+    layer.cells = cdt2d(layer.positions, layer.cells, {
+      exterior: false,
+      interior: true,
+      delaunay: true
     })
 
-  return meshes
+    return layer
+  }, [])
 }
 
 function meshExtrude (contours) {
   var polyline = contours.reduce(function (polyline, contour, height) {
-    var lines = toPolyline(contour.cells, contour.positions)
-    var edges = []
-
-    for (var i = 0; i < lines.length; i++) {
-      var line = lines[i]
-
-      for (var j = 0; j < line.length; j++) {
-        var isHole = !!j
-        var bound = line[j]
-
-        if (bound.length < 6) continue
-
-        for (var k = 0; k < bound.length; k++) {
-          bound[k] = contour.positions[bound[k]]
+    var components = simplicial
+      .connectedComponents(contour.cells)
+      .map(function (cells) {
+        return {
+          positions: contour.positions,
+          cells: cells,
+          height: height
         }
+      })
+      .map(function (complex) {
+        var height = complex.height
+        complex = removeOrphans(complex.cells, complex.positions)
+        complex.height = height
+        return complex
+      })
 
-        edges.push(extrude(bound,
-          isHole ? -height : -height - 1,
-          isHole ? -height - 1 : -height
-        ))
-      }
-
+    return polyline.concat(components)
+  }, []).map(function (contour) {
+    var height = contour.height
+    var top = -height - 1
+    var bottom = -height
+    var output = {
+      positions: [],
+      cells: []
     }
 
-    return polyline.concat(edges)
+    for (var i = 0; i < contour.cells.length; i++) {
+      var cell = contour.cells[i]
+      var p0 = contour.positions[cell[0]]
+      var p1 = contour.positions[cell[1]]
+
+      output.positions.push([
+        p0[0],
+        p0[1],
+        bottom
+      ], [
+        p1[0],
+        p1[1],
+        top
+      ], [
+        p0[0],
+        p0[1],
+        top
+      ], [
+        p1[0],
+        p1[1],
+        bottom
+      ])
+
+      output.cells.push(
+        [i * 4 + 1, i * 4 + 2, i * 4],
+        [i * 4 + 1, i * 4, i * 4 + 3]
+      )
+    }
+
+    output = removeOrphans(output.cells, output.positions)
+
+    return output
   }, [])
 
   return polyline
@@ -97,34 +112,4 @@ function to3d (positions, j) {
   }
 
   return positions
-}
-
-function extrude (line, bottom, top) {
-  var positions = []
-  var cells = []
-
-  for (var i = 0; i < line.length; i++) {
-    positions.push([
-      line[i][0],
-      line[i][1],
-      bottom
-    ], [
-      line[i][0],
-      line[i][1],
-      top
-    ])
-
-    var k = i ? i : 0
-    var j = i ? i - 1 : line.length - 1
-
-    cells.push(
-      [k * 2 + 1, k * 2, j * 2],
-      [k * 2 + 1, j * 2, j * 2 + 1]
-    )
-  }
-
-  return {
-    positions: positions,
-    cells: cells
-  }
 }
